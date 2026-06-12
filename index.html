@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rainbow Scratch-it Paper Website</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  #canvasContainer {
+    position: relative;
+    width: 500px;
+    height: 500px;
+    border: 1px solid #ccc;
+  }
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>Rainbow Scratch-it Paper Creator</h1>
+<div id="canvasContainer">
+  <canvas id="imageCanvas" width="500" height="500"></canvas>
+  <canvas id="scratchCanvas" width="500" height="500"></canvas>
+</div>
+<button id="saveBtn">Save Creation</button>
+<h2>Gallery</h2>
+<div id="gallery"></div>
+
+<script>
+  const imageCanvas = document.getElementById('imageCanvas');
+  const scratchCanvas = document.getElementById('scratchCanvas');
+  const imageCtx = imageCanvas.getContext('2d');
+  const scratchCtx = scratchCanvas.getContext('2d');
+
+  // Generate rainbow background
+  function createRainbowBackground() {
+    const gradient = imageCtx.createLinearGradient(0, 0, imageCanvas.width, 0);
+    gradient.addColorStop(0, 'red');
+    gradient.addColorStop(0.17, 'orange');
+    gradient.addColorStop(0.34, 'yellow');
+    gradient.addColorStop(0.51, 'green');
+    gradient.addColorStop(0.68, 'blue');
+    gradient.addColorStop(0.85, 'indigo');
+    gradient.addColorStop(1, 'violet');
+
+    imageCtx.fillStyle = gradient;
+    imageCtx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+  }
+
+  // Initialize everything
+  createRainbowBackground();
+  initScratch();
+
+  function initScratch() {
+    // Fill scratch canvas with black overlay
+    scratchCtx.fillStyle = 'black';
+    scratchCtx.fillRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+
+    // Add event listeners for scratching
+    let isDrawing = false;
+
+    scratchCanvas.addEventListener('mousedown', startScratching);
+    scratchCanvas.addEventListener('mouseup', stopScratching);
+    scratchCanvas.addEventListener('mouseout', stopScratching);
+    scratchCanvas.addEventListener('mousemove', scratch);
+
+    // For touch devices
+    scratchCanvas.addEventListener('touchstart', startScratching);
+    scratchCanvas.addEventListener('touchend', stopScratching);
+    scratchCanvas.addEventListener('touchcancel', stopScratching);
+    scratchCanvas.addEventListener('touchmove', scratch);
+
+    function getPointerPosition(e) {
+      const rect = scratchCanvas.getBoundingClientRect();
+      const x = (e.clientX || e.touches[0].clientX) - rect.left;
+      const y = (e.clientY || e.touches[0].clientY) - rect.top;
+      return { x, y };
+    }
+
+    function startScratching(e) {
+      e.preventDefault();
+      isDrawing = true;
+    }
+
+    function stopScratching(e) {
+      e.preventDefault();
+      isDrawing = false;
+    }
+
+    function scratch(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      const pos = getPointerPosition(e);
+      // Erase part of the black overlay
+      scratchCtx.globalCompositeOperation = 'destination-out';
+      scratchCtx.beginPath();
+      scratchCtx.arc(pos.x, pos.y, 20, 0, Math.PI * 2);
+      scratchCtx.fill();
+      scratchCtx.globalCompositeOperation = 'source-over';
+    }
+  }
+
+  // Save current reveal as image
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    // Create a combined image
+    const combinedCanvas = document.createElement('canvas');
+    combinedCanvas.width = 500;
+    combinedCanvas.height = 500;
+    const ctx = combinedCanvas.getContext('2d');
+
+    // Draw the rainbow background
+    ctx.drawImage(imageCanvas, 0, 0);
+    // Draw the scratched overlay
+    ctx.drawImage(scratchCanvas, 0, 0);
+
+    const dataUrl = combinedCanvas.toDataURL('image/png');
+
+    // Add to gallery
+    const gallery = document.getElementById('gallery');
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.width = 100;
+    img.className = 'thumbnail';
+    gallery.appendChild(img);
+  });
+</script>
+
+</body>
+</html>
+</html>
